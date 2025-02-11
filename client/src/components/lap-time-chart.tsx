@@ -25,12 +25,12 @@ export default function LapTimeChart({ lapTimes }: LapTimeChartProps) {
   const worstLap = Math.max(...data.map(d => d.time));
   const avgLap = data.reduce((sum, d) => sum + d.time, 0) / data.length;
 
-  // Calculate Y-axis domain with 5-second intervals
-  const minTime = Math.floor(Math.min(...data.map(d => d.time)) / 5) * 5;
-  const maxTime = Math.ceil(Math.max(...data.map(d => d.time)) / 5) * 5;
+  // Calculate Y-axis domain for every second
+  const minTime = Math.floor(Math.min(...data.map(d => d.time)));
+  const maxTime = Math.ceil(Math.max(...data.map(d => d.time)));
   const yTicks = Array.from(
-    { length: ((maxTime - minTime) / 5) + 1 },
-    (_, i) => minTime + (i * 5)
+    { length: maxTime - minTime + 1 },
+    (_, i) => minTime + i
   );
 
   return (
@@ -68,9 +68,10 @@ export default function LapTimeChart({ lapTimes }: LapTimeChartProps) {
             }}
             tick={{ fontSize: 12 }}
             tickMargin={10}
+            interval={0}  // Show all lap numbers
           />
           <YAxis
-            domain={[minTime, maxTime]}
+            domain={[minTime - 1, maxTime + 1]}
             ticks={yTicks}
             tickFormatter={(value) => formatSecondsToTime(value)}
             label={{
@@ -81,6 +82,7 @@ export default function LapTimeChart({ lapTimes }: LapTimeChartProps) {
             }}
             tick={{ fontSize: 12 }}
             tickMargin={10}
+            allowDataOverflow={true}
           />
           <Tooltip
             formatter={(value: number) => [formatSecondsToTime(value), "Lap Time"]}

@@ -6,7 +6,8 @@ import {
   CartesianGrid,
   Tooltip,
   Legend,
-  ResponsiveContainer
+  ResponsiveContainer,
+  ReferenceLine
 } from "recharts";
 import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -37,12 +38,18 @@ export default function RaceComparison({ races }: RaceComparisonProps) {
   const allTimes = filteredRaces.flatMap(race =>
     race.lap_times.map(([_, time]) => parseTimeToSeconds(time))
   );
-  const minTime = Math.floor(Math.min(...allTimes, Number.MAX_VALUE) / 5) * 5;
-  const maxTime = Math.ceil(Math.max(...allTimes, 0) / 5) * 5;
+  const minTime = Math.floor(Math.min(...allTimes, Number.MAX_VALUE));
+  const maxTime = Math.ceil(Math.max(...allTimes, 0));
+
+  // Generate ticks for every second
   const yTicks = Array.from(
-    { length: ((maxTime - minTime) / 5) + 1 },
-    (_, i) => minTime + (i * 5)
+    { length: maxTime - minTime + 1 },
+    (_, i) => minTime + i
   );
+
+  // Calculate best and average times across all selected races
+  const bestTime = Math.min(...allTimes);
+  const avgTime = allTimes.reduce((sum, time) => sum + time, 0) / allTimes.length;
 
   const data = Array.from({ length: maxLaps }, (_, i) => {
     const lapData: Record<string, any> = {
@@ -102,9 +109,10 @@ export default function RaceComparison({ races }: RaceComparisonProps) {
                 }}
                 tick={{ fontSize: 12 }}
                 tickMargin={10}
+                interval={0}  // Show all lap numbers
               />
               <YAxis
-                domain={[minTime, maxTime]}
+                domain={[minTime - 1, maxTime + 1]}
                 ticks={yTicks}
                 tickFormatter={(value) => formatSecondsToTime(value)}
                 label={{
@@ -115,6 +123,7 @@ export default function RaceComparison({ races }: RaceComparisonProps) {
                 }}
                 tick={{ fontSize: 12 }}
                 tickMargin={10}
+                allowDataOverflow={true}
               />
               <Tooltip
                 formatter={(value: number) => [formatSecondsToTime(value), "Lap Time"]}
@@ -133,6 +142,28 @@ export default function RaceComparison({ races }: RaceComparisonProps) {
                 }}
                 wrapperStyle={{
                   paddingTop: "20px"
+                }}
+              />
+              <ReferenceLine
+                y={bestTime}
+                stroke="hsl(var(--success))"
+                strokeDasharray="3 3"
+                label={{ 
+                  value: "Best Time Overall", 
+                  position: "right",
+                  fill: "hsl(var(--success))",
+                  fontSize: 12
+                }}
+              />
+              <ReferenceLine
+                y={avgTime}
+                stroke="hsl(var(--primary))"
+                strokeDasharray="3 3"
+                label={{ 
+                  value: "Average Time", 
+                  position: "right",
+                  fill: "hsl(var(--primary))",
+                  fontSize: 12
                 }}
               />
               {filteredRaces.map((race, index) => (
