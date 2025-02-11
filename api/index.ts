@@ -1,6 +1,6 @@
 import express from 'express';
 import { storage } from '../server/storage.js';
-import { raceDataJsonSchema } from '../shared/schema';
+import { raceDataJsonSchema } from '../shared/schema.js';
 
 const app = express();
 app.use(express.json());
