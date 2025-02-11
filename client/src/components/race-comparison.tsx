@@ -188,7 +188,13 @@ export default function RaceComparison({ races }: RaceComparisonProps) {
                   type="monotone"
                   dataKey={race.race_id}
                   name={race.race_id}
-                  stroke={`hsl(var(--chart-${(index % 5) + 1}))`}
+                  stroke={`rgb(${[
+                    [59, 130, 246],   // Blue
+                    [34, 197, 94],    // Green
+                    [239, 68, 68],    // Red
+                    [168, 85, 247],   // Purple
+                    [234, 179, 8]     // Yellow
+                  ][index % 5].join(', ')})`}
                   strokeWidth={2}
                   dot={{
                     r: 4,
@@ -197,7 +203,6 @@ export default function RaceComparison({ races }: RaceComparisonProps) {
                   }}
                   activeDot={{
                     r: 6,
-                    stroke: `hsl(var(--chart-${(index % 5) + 1}))`,
                     strokeWidth: 2,
                     fill: "white"
                   }}
