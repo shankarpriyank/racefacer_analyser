@@ -9,74 +9,123 @@ import {
   ResponsiveContainer
 } from "recharts";
 import { Card } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import { parseTimeToSeconds, formatSecondsToTime } from "@/lib/utils";
+import { useState } from "react";
 import type { RaceDataJson } from "@shared/schema";
 
 interface RaceComparisonProps {
   races: RaceDataJson["races_data"];
 }
 
-const COLORS = [
-  "hsl(var(--chart-1))",
-  "hsl(var(--chart-2))",
-  "hsl(var(--chart-3))",
-  "hsl(var(--chart-4))",
-  "hsl(var(--chart-5))",
-];
-
 export default function RaceComparison({ races }: RaceComparisonProps) {
-  const maxLaps = Math.max(...races.map(race => race.lap_times.length));
-  
+  const [selectedRaces, setSelectedRaces] = useState<string[]>([]);
+
+  const handleRaceToggle = (raceId: string) => {
+    setSelectedRaces(prev =>
+      prev.includes(raceId)
+        ? prev.filter(id => id !== raceId)
+        : [...prev, raceId]
+    );
+  };
+
+  const filteredRaces = races.filter(race => selectedRaces.includes(race.race_id));
+  const maxLaps = Math.max(...filteredRaces.map(race => race.lap_times.length));
+
   const data = Array.from({ length: maxLaps }, (_, i) => {
-    const lapData: Record<string, number> = {
+    const lapData: Record<string, any> = {
       lap: i + 1
     };
-    
-    races.forEach((race, raceIndex) => {
+
+    filteredRaces.forEach(race => {
       const lapTime = race.lap_times[i];
       if (lapTime) {
-        lapData[`Race ${raceIndex + 1}`] = parseFloat(lapTime[1].split(":")[1]);
+        lapData[race.race_id] = parseTimeToSeconds(lapTime[1]);
       }
     });
-    
+
     return lapData;
   });
 
+  const formatDate = (dateStr: string, timeStr: string) => {
+    return `${dateStr} ${timeStr}`;
+  };
+
   return (
-    <div className="space-y-4">
-      <h3 className="text-lg font-semibold">Lap Time Comparison</h3>
-      
-      <Card className="p-4">
-        <ResponsiveContainer width="100%" height={400}>
-          <LineChart data={data} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis
-              dataKey="lap"
-              label={{ value: "Lap Number", position: "bottom" }}
+    <div className="space-y-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {races.map((race) => (
+          <div
+            key={race.race_id}
+            className="flex items-start space-x-2"
+          >
+            <Checkbox
+              id={race.race_id}
+              checked={selectedRaces.includes(race.race_id)}
+              onCheckedChange={() => handleRaceToggle(race.race_id)}
             />
-            <YAxis
-              label={{
-                value: "Lap Time (seconds)",
-                angle: -90,
-                position: "insideLeft"
-              }}
-            />
-            <Tooltip
-              formatter={(value: number) => [`${value.toFixed(3)}s`, "Lap Time"]}
-            />
-            <Legend />
-            {races.map((_, index) => (
-              <Line
-                key={index}
-                type="monotone"
-                dataKey={`Race ${index + 1}`}
-                stroke={COLORS[index % COLORS.length]}
-                strokeWidth={2}
-                dot={false}
+            <Label htmlFor={race.race_id} className="text-sm">
+              <div>{formatDate(race.date, race.time)}</div>
+              <div className="text-muted-foreground">Position: {race.position}</div>
+            </Label>
+          </div>
+        ))}
+      </div>
+
+      {selectedRaces.length > 0 ? (
+        <Card className="p-6">
+          <ResponsiveContainer width="100%" height={400}>
+            <LineChart data={data} margin={{ top: 20, right: 30, bottom: 20, left: 30 }}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis
+                dataKey="lap"
+                label={{ value: "Lap Number", position: "bottom" }}
               />
-            ))}
-          </LineChart>
-        </ResponsiveContainer>
-      </Card>
+              <YAxis
+                domain={['auto', 'auto']}
+                tickFormatter={(value) => formatSecondsToTime(value)}
+                label={{
+                  value: "Lap Time",
+                  angle: -90,
+                  position: "insideLeft"
+                }}
+              />
+              <Tooltip
+                formatter={(value: number) => [formatSecondsToTime(value), "Lap Time"]}
+                labelFormatter={(label) => `Lap ${label}`}
+              />
+              <Legend
+                formatter={(value) => {
+                  const race = races.find(r => r.race_id === value);
+                  return race ? formatDate(race.date, race.time) : value;
+                }}
+              />
+              {filteredRaces.map((race, index) => (
+                <Line
+                  key={race.race_id}
+                  type="monotone"
+                  dataKey={race.race_id}
+                  name={race.race_id}
+                  stroke={`hsl(var(--chart-${(index % 5) + 1}))`}
+                  strokeWidth={2}
+                  dot={false}
+                  activeDot={{
+                    r: 6,
+                    stroke: `hsl(var(--chart-${(index % 5) + 1}))`,
+                    strokeWidth: 2,
+                    fill: "white"
+                  }}
+                />
+              ))}
+            </LineChart>
+          </ResponsiveContainer>
+        </Card>
+      ) : (
+        <Card className="p-6 text-center text-muted-foreground">
+          Select races to compare their lap times
+        </Card>
+      )}
     </div>
   );
 }
