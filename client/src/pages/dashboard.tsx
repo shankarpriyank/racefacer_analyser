@@ -27,15 +27,15 @@ export default function Dashboard() {
     <div className="min-h-screen bg-background p-6">
       <div className="max-w-7xl mx-auto space-y-6">
         <ProfileCard profile={data.profile_info} />
-        
+
         <Tabs defaultValue="races" className="w-full">
           <TabsList>
             <TabsTrigger value="races">Individual Races</TabsTrigger>
             <TabsTrigger value="comparison">Race Comparison</TabsTrigger>
           </TabsList>
-          
+
           <TabsContent value="races">
-            <div className="grid gap-6 md:grid-cols-2">
+            <div className="space-y-6">
               {data.races_data.map((race) => (
                 <Card key={race.race_id}>
                   <CardContent className="p-6">
@@ -45,7 +45,7 @@ export default function Dashboard() {
               ))}
             </div>
           </TabsContent>
-          
+
           <TabsContent value="comparison">
             <Card>
               <CardContent className="p-6">

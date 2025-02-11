@@ -25,6 +25,14 @@ export default function LapTimeChart({ lapTimes }: LapTimeChartProps) {
   const worstLap = Math.max(...data.map(d => d.time));
   const avgLap = data.reduce((sum, d) => sum + d.time, 0) / data.length;
 
+  // Calculate Y-axis domain with 5-second intervals
+  const minTime = Math.floor(Math.min(...data.map(d => d.time)) / 5) * 5;
+  const maxTime = Math.ceil(Math.max(...data.map(d => d.time)) / 5) * 5;
+  const yTicks = Array.from(
+    { length: ((maxTime - minTime) / 5) + 1 },
+    (_, i) => minTime + (i * 5)
+  );
+
   return (
     <Card className="p-8">
       <div className="mb-6">
@@ -62,10 +70,8 @@ export default function LapTimeChart({ lapTimes }: LapTimeChartProps) {
             tickMargin={10}
           />
           <YAxis
-            domain={[
-              (dataMin: number) => dataMin - 0.5,
-              (dataMax: number) => dataMax + 0.5
-            ]}
+            domain={[minTime, maxTime]}
+            ticks={yTicks}
             tickFormatter={(value) => formatSecondsToTime(value)}
             label={{
               value: "Lap Time",
@@ -114,15 +120,14 @@ export default function LapTimeChart({ lapTimes }: LapTimeChartProps) {
             stroke="hsl(var(--primary))"
             strokeWidth={2}
             dot={{
-              stroke: "hsl(var(--primary))",
-              strokeWidth: 2,
               r: 4,
+              strokeWidth: 2,
               fill: "white"
             }}
             activeDot={{
+              r: 6,
               stroke: "hsl(var(--primary))",
               strokeWidth: 2,
-              r: 6,
               fill: "white"
             }}
           />

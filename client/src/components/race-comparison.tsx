@@ -33,6 +33,17 @@ export default function RaceComparison({ races }: RaceComparisonProps) {
   const filteredRaces = races.filter(race => selectedRaces.includes(race.race_id));
   const maxLaps = Math.max(...filteredRaces.map(race => race.lap_times.length), 1);
 
+  // Calculate Y-axis domain based on all lap times
+  const allTimes = filteredRaces.flatMap(race =>
+    race.lap_times.map(([_, time]) => parseTimeToSeconds(time))
+  );
+  const minTime = Math.floor(Math.min(...allTimes, Number.MAX_VALUE) / 5) * 5;
+  const maxTime = Math.ceil(Math.max(...allTimes, 0) / 5) * 5;
+  const yTicks = Array.from(
+    { length: ((maxTime - minTime) / 5) + 1 },
+    (_, i) => minTime + (i * 5)
+  );
+
   const data = Array.from({ length: maxLaps }, (_, i) => {
     const lapData: Record<string, any> = {
       lap: i + 1
@@ -55,11 +66,11 @@ export default function RaceComparison({ races }: RaceComparisonProps) {
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="flex flex-wrap gap-4">
         {races.map((race) => (
           <div
             key={race.race_id}
-            className="flex items-start space-x-2 p-2 rounded-lg hover:bg-accent"
+            className="flex items-start space-x-2 p-2 rounded-lg hover:bg-accent border border-border"
           >
             <Checkbox
               id={race.race_id}
@@ -93,7 +104,8 @@ export default function RaceComparison({ races }: RaceComparisonProps) {
                 tickMargin={10}
               />
               <YAxis
-                domain={['auto', 'auto']}
+                domain={[minTime, maxTime]}
+                ticks={yTicks}
                 tickFormatter={(value) => formatSecondsToTime(value)}
                 label={{
                   value: "Lap Time",
