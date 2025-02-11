@@ -1,5 +1,4 @@
-import { type RaceData, type InsertRaceData, type RaceDataJson } from "@shared/schema";
-
+import { type RaceData, type InsertRaceData, type RaceDataJson } from "../shared/schema.js";
 export interface IStorage {
   getRaceData(): Promise<RaceDataJson | undefined>;
   createRaceData(data: InsertRaceData): Promise<RaceData>;
