@@ -24,9 +24,5 @@
       "src": "/(.*)",
       "dest": "/$1"
     }
-  ],
-  "build": {
-    "outDir": "dist/public",
-    "emptyOutDir": true
-  }
+  ]
 }
