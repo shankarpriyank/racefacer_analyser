@@ -149,36 +149,36 @@ export default function RaceComparison({ races }: RaceComparisonProps) {
               {/* Best Time Reference Line */}
               <ReferenceLine
                 y={bestTime}
-                stroke="hsl(var(--success))"
+                stroke="rgb(34, 197, 94)"  // Green-500
                 strokeDasharray="3 3"
                 label={{ 
                   value: "Best Time Overall", 
                   position: "right",
-                  fill: "hsl(var(--success))",
+                  fill: "rgb(34, 197, 94)",
                   fontSize: 12
                 }}
               />
               {/* Average Time Reference Line */}
               <ReferenceLine
                 y={avgTime}
-                stroke="hsl(var(--primary))"
+                stroke="rgb(59, 130, 246)"  // Blue-500
                 strokeDasharray="3 3"
                 label={{ 
                   value: "Average Time", 
                   position: "right",
-                  fill: "hsl(var(--primary))",
+                  fill: "rgb(59, 130, 246)",
                   fontSize: 12
                 }}
               />
               {/* Worst Time Reference Line */}
               <ReferenceLine
                 y={worstTime}
-                stroke="hsl(var(--destructive))"
+                stroke="rgb(239, 68, 68)"  // Red-500
                 strokeDasharray="3 3"
                 label={{ 
                   value: "Worst Time Overall", 
                   position: "right",
-                  fill: "hsl(var(--destructive))",
+                  fill: "rgb(239, 68, 68)",
                   fontSize: 12
                 }}
               />

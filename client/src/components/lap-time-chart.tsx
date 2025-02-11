@@ -97,36 +97,36 @@ export default function LapTimeChart({ lapTimes }: LapTimeChartProps) {
           {/* Best Lap Reference Line */}
           <ReferenceLine
             y={bestLap}
-            stroke="hsl(var(--success))"
+            stroke="rgb(34, 197, 94)"  // Green-500
             strokeDasharray="3 3"
             label={{ 
               value: "Best Lap", 
               position: "right",
-              fill: "hsl(var(--success))",
+              fill: "rgb(34, 197, 94)",
               fontSize: 12
             }}
           />
           {/* Average Lap Reference Line */}
           <ReferenceLine
             y={avgLap}
-            stroke="hsl(var(--primary))"
+            stroke="rgb(59, 130, 246)"  // Blue-500
             strokeDasharray="3 3"
             label={{ 
               value: "Average", 
               position: "right",
-              fill: "hsl(var(--primary))",
+              fill: "rgb(59, 130, 246)",
               fontSize: 12
             }}
           />
           {/* Worst Lap Reference Line */}
           <ReferenceLine
             y={worstLap}
-            stroke="hsl(var(--destructive))"
+            stroke="rgb(239, 68, 68)"  // Red-500
             strokeDasharray="3 3"
             label={{ 
               value: "Worst Lap", 
               position: "right",
-              fill: "hsl(var(--destructive))",
+              fill: "rgb(239, 68, 68)",
               fontSize: 12
             }}
           />
