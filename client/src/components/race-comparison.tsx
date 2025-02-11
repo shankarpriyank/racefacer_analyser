@@ -31,7 +31,7 @@ export default function RaceComparison({ races }: RaceComparisonProps) {
   };
 
   const filteredRaces = races.filter(race => selectedRaces.includes(race.race_id));
-  const maxLaps = Math.max(...filteredRaces.map(race => race.lap_times.length));
+  const maxLaps = Math.max(...filteredRaces.map(race => race.lap_times.length), 1);
 
   const data = Array.from({ length: maxLaps }, (_, i) => {
     const lapData: Record<string, any> = {
@@ -49,7 +49,8 @@ export default function RaceComparison({ races }: RaceComparisonProps) {
   });
 
   const formatDate = (dateStr: string, timeStr: string) => {
-    return `${dateStr} ${timeStr}`;
+    const [day, month, year] = dateStr.split('.');
+    return `${day}/${month}/${year} - ${timeStr}`;
   };
 
   return (
@@ -58,15 +59,15 @@ export default function RaceComparison({ races }: RaceComparisonProps) {
         {races.map((race) => (
           <div
             key={race.race_id}
-            className="flex items-start space-x-2"
+            className="flex items-start space-x-2 p-2 rounded-lg hover:bg-accent"
           >
             <Checkbox
               id={race.race_id}
               checked={selectedRaces.includes(race.race_id)}
               onCheckedChange={() => handleRaceToggle(race.race_id)}
             />
-            <Label htmlFor={race.race_id} className="text-sm">
-              <div>{formatDate(race.date, race.time)}</div>
+            <Label htmlFor={race.race_id} className="text-sm cursor-pointer">
+              <div className="font-medium">{formatDate(race.date, race.time)}</div>
               <div className="text-muted-foreground">Position: {race.position}</div>
             </Label>
           </div>
@@ -74,13 +75,22 @@ export default function RaceComparison({ races }: RaceComparisonProps) {
       </div>
 
       {selectedRaces.length > 0 ? (
-        <Card className="p-6">
-          <ResponsiveContainer width="100%" height={400}>
-            <LineChart data={data} margin={{ top: 20, right: 30, bottom: 20, left: 30 }}>
-              <CartesianGrid strokeDasharray="3 3" />
+        <Card className="p-8">
+          <ResponsiveContainer width="100%" height={500}>
+            <LineChart 
+              data={data} 
+              margin={{ top: 30, right: 100, bottom: 50, left: 70 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
               <XAxis
                 dataKey="lap"
-                label={{ value: "Lap Number", position: "bottom" }}
+                label={{ 
+                  value: "Lap Number", 
+                  position: "bottom", 
+                  offset: 30 
+                }}
+                tick={{ fontSize: 12 }}
+                tickMargin={10}
               />
               <YAxis
                 domain={['auto', 'auto']}
@@ -88,17 +98,29 @@ export default function RaceComparison({ races }: RaceComparisonProps) {
                 label={{
                   value: "Lap Time",
                   angle: -90,
-                  position: "insideLeft"
+                  position: "insideLeft",
+                  offset: -50
                 }}
+                tick={{ fontSize: 12 }}
+                tickMargin={10}
               />
               <Tooltip
                 formatter={(value: number) => [formatSecondsToTime(value), "Lap Time"]}
                 labelFormatter={(label) => `Lap ${label}`}
+                contentStyle={{
+                  backgroundColor: "hsl(var(--background))",
+                  border: "1px solid hsl(var(--border))",
+                  borderRadius: "var(--radius)",
+                  padding: "8px"
+                }}
               />
               <Legend
                 formatter={(value) => {
                   const race = races.find(r => r.race_id === value);
                   return race ? formatDate(race.date, race.time) : value;
+                }}
+                wrapperStyle={{
+                  paddingTop: "20px"
                 }}
               />
               {filteredRaces.map((race, index) => (
@@ -109,13 +131,18 @@ export default function RaceComparison({ races }: RaceComparisonProps) {
                   name={race.race_id}
                   stroke={`hsl(var(--chart-${(index % 5) + 1}))`}
                   strokeWidth={2}
-                  dot={false}
+                  dot={{
+                    r: 4,
+                    strokeWidth: 2,
+                    fill: "white"
+                  }}
                   activeDot={{
                     r: 6,
                     stroke: `hsl(var(--chart-${(index % 5) + 1}))`,
                     strokeWidth: 2,
                     fill: "white"
                   }}
+                  connectNulls
                 />
               ))}
             </LineChart>

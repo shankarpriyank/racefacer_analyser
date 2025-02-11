@@ -26,56 +26,87 @@ export default function LapTimeChart({ lapTimes }: LapTimeChartProps) {
   const avgLap = data.reduce((sum, d) => sum + d.time, 0) / data.length;
 
   return (
-    <Card className="p-6">
-      <div className="mb-4">
-        <h4 className="text-sm font-medium mb-2">Lap Time Analysis</h4>
+    <Card className="p-8">
+      <div className="mb-6">
+        <h4 className="text-sm font-medium mb-3">Lap Time Analysis</h4>
         <div className="grid grid-cols-3 gap-4 text-sm">
-          <div className="p-2 rounded bg-green-50 dark:bg-green-900/20">
-            <div className="text-green-600 dark:text-green-400">Best Lap</div>
-            <div className="font-mono">{formatSecondsToTime(bestLap)}</div>
+          <div className="p-3 rounded-lg bg-green-50 dark:bg-green-900/20">
+            <div className="text-green-600 dark:text-green-400 mb-1">Best Lap</div>
+            <div className="font-mono text-lg">{formatSecondsToTime(bestLap)}</div>
           </div>
-          <div className="p-2 rounded bg-blue-50 dark:bg-blue-900/20">
-            <div className="text-blue-600 dark:text-blue-400">Average</div>
-            <div className="font-mono">{formatSecondsToTime(avgLap)}</div>
+          <div className="p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20">
+            <div className="text-blue-600 dark:text-blue-400 mb-1">Average</div>
+            <div className="font-mono text-lg">{formatSecondsToTime(avgLap)}</div>
           </div>
-          <div className="p-2 rounded bg-red-50 dark:bg-red-900/20">
-            <div className="text-red-600 dark:text-red-400">Worst Lap</div>
-            <div className="font-mono">{formatSecondsToTime(worstLap)}</div>
+          <div className="p-3 rounded-lg bg-red-50 dark:bg-red-900/20">
+            <div className="text-red-600 dark:text-red-400 mb-1">Worst Lap</div>
+            <div className="font-mono text-lg">{formatSecondsToTime(worstLap)}</div>
           </div>
         </div>
       </div>
 
-      <ResponsiveContainer width="100%" height={300}>
-        <LineChart data={data} margin={{ top: 20, right: 30, bottom: 20, left: 30 }}>
-          <CartesianGrid strokeDasharray="3 3" />
+      <ResponsiveContainer width="100%" height={400}>
+        <LineChart 
+          data={data} 
+          margin={{ top: 30, right: 100, bottom: 50, left: 70 }}
+        >
+          <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
           <XAxis
             dataKey="lap"
-            label={{ value: "Lap Number", position: "bottom" }}
+            label={{ 
+              value: "Lap Number", 
+              position: "bottom",
+              offset: 30
+            }}
+            tick={{ fontSize: 12 }}
+            tickMargin={10}
           />
           <YAxis
-            domain={['auto', 'auto']}
+            domain={[
+              (dataMin: number) => dataMin - 0.5,
+              (dataMax: number) => dataMax + 0.5
+            ]}
             tickFormatter={(value) => formatSecondsToTime(value)}
             label={{
               value: "Lap Time",
               angle: -90,
-              position: "insideLeft"
+              position: "insideLeft",
+              offset: -50
             }}
+            tick={{ fontSize: 12 }}
+            tickMargin={10}
           />
           <Tooltip
             formatter={(value: number) => [formatSecondsToTime(value), "Lap Time"]}
             labelFormatter={(label) => `Lap ${label}`}
+            contentStyle={{
+              backgroundColor: "hsl(var(--background))",
+              border: "1px solid hsl(var(--border))",
+              borderRadius: "var(--radius)",
+              padding: "8px"
+            }}
           />
           <ReferenceLine
             y={bestLap}
-            stroke="green"
+            stroke="hsl(var(--success))"
             strokeDasharray="3 3"
-            label={{ value: "Best Lap", position: "right" }}
+            label={{ 
+              value: "Best Lap", 
+              position: "right",
+              fill: "hsl(var(--success))",
+              fontSize: 12
+            }}
           />
           <ReferenceLine
             y={avgLap}
-            stroke="blue"
+            stroke="hsl(var(--primary))"
             strokeDasharray="3 3"
-            label={{ value: "Average", position: "right" }}
+            label={{ 
+              value: "Average", 
+              position: "right",
+              fill: "hsl(var(--primary))",
+              fontSize: 12
+            }}
           />
           <Line
             type="monotone"
