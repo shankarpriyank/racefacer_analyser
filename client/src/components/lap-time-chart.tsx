@@ -94,6 +94,7 @@ export default function LapTimeChart({ lapTimes }: LapTimeChartProps) {
               padding: "8px"
             }}
           />
+          {/* Best Lap Reference Line */}
           <ReferenceLine
             y={bestLap}
             stroke="hsl(var(--success))"
@@ -105,6 +106,7 @@ export default function LapTimeChart({ lapTimes }: LapTimeChartProps) {
               fontSize: 12
             }}
           />
+          {/* Average Lap Reference Line */}
           <ReferenceLine
             y={avgLap}
             stroke="hsl(var(--primary))"
@@ -113,6 +115,18 @@ export default function LapTimeChart({ lapTimes }: LapTimeChartProps) {
               value: "Average", 
               position: "right",
               fill: "hsl(var(--primary))",
+              fontSize: 12
+            }}
+          />
+          {/* Worst Lap Reference Line */}
+          <ReferenceLine
+            y={worstLap}
+            stroke="hsl(var(--destructive))"
+            strokeDasharray="3 3"
+            label={{ 
+              value: "Worst Lap", 
+              position: "right",
+              fill: "hsl(var(--destructive))",
               fontSize: 12
             }}
           />

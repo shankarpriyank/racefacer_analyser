@@ -50,7 +50,14 @@ export default function RaceComparison({ races }: RaceComparisonProps) {
   // Calculate best and average times across all selected races
   const bestTime = Math.min(...allTimes);
   const avgTime = allTimes.reduce((sum, time) => sum + time, 0) / allTimes.length;
+  const worstTime = Math.max(...allTimes);
 
+  const formatDate = (dateStr: string, timeStr: string) => {
+    const [day, month, year] = dateStr.split('.');
+    return `${day}/${month}/${year} - ${timeStr}`;
+  };
+
+  // Prepare data for chart
   const data = Array.from({ length: maxLaps }, (_, i) => {
     const lapData: Record<string, any> = {
       lap: i + 1
@@ -65,11 +72,6 @@ export default function RaceComparison({ races }: RaceComparisonProps) {
 
     return lapData;
   });
-
-  const formatDate = (dateStr: string, timeStr: string) => {
-    const [day, month, year] = dateStr.split('.');
-    return `${day}/${month}/${year} - ${timeStr}`;
-  };
 
   return (
     <div className="space-y-6">
@@ -144,6 +146,7 @@ export default function RaceComparison({ races }: RaceComparisonProps) {
                   paddingTop: "20px"
                 }}
               />
+              {/* Best Time Reference Line */}
               <ReferenceLine
                 y={bestTime}
                 stroke="hsl(var(--success))"
@@ -155,6 +158,7 @@ export default function RaceComparison({ races }: RaceComparisonProps) {
                   fontSize: 12
                 }}
               />
+              {/* Average Time Reference Line */}
               <ReferenceLine
                 y={avgTime}
                 stroke="hsl(var(--primary))"
@@ -163,6 +167,18 @@ export default function RaceComparison({ races }: RaceComparisonProps) {
                   value: "Average Time", 
                   position: "right",
                   fill: "hsl(var(--primary))",
+                  fontSize: 12
+                }}
+              />
+              {/* Worst Time Reference Line */}
+              <ReferenceLine
+                y={worstTime}
+                stroke="hsl(var(--destructive))"
+                strokeDasharray="3 3"
+                label={{ 
+                  value: "Worst Time Overall", 
+                  position: "right",
+                  fill: "hsl(var(--destructive))",
                   fontSize: 12
                 }}
               />
