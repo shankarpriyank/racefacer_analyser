@@ -107,7 +107,7 @@ export default function RaceComparison({ races }: RaceComparisonProps) {
                 label={{ 
                   value: "Lap Number", 
                   position: "bottom", 
-                  offset: 30 
+                  offset: 70 
                 }}
                 tick={{ fontSize: 12 }}
                 tickMargin={10}
@@ -143,7 +143,8 @@ export default function RaceComparison({ races }: RaceComparisonProps) {
                   return race ? formatDate(race.date, race.time) : value;
                 }}
                 wrapperStyle={{
-                  paddingTop: "20px"
+                  paddingTop: "20px",
+                  paddingBottom: "20px"
                 }}
               />
               {/* Best Time Reference Line */}
