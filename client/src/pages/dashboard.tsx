@@ -1,4 +1,5 @@
-import { useQuery } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
+import { useLocation } from "wouter";
 import ProfileCard from "@/components/profile-card";
 import RaceDetails from "@/components/race-details";
 import RaceComparison from "@/components/race-comparison";
@@ -8,11 +9,20 @@ import { Skeleton } from "@/components/ui/skeleton";
 import type { RaceDataJson } from "@shared/schema";
 
 export default function Dashboard() {
-  const { data, isLoading } = useQuery<RaceDataJson>({
-    queryKey: ["/api/races"],
-  });
+  const [, setLocation] = useLocation();
+  const [data, setData] = useState<RaceDataJson | null>(null);
 
-  if (isLoading) {
+  useEffect(() => {
+    // Get the race data from sessionStorage
+    const storedData = sessionStorage.getItem('raceData');
+    if (!storedData) {
+      setLocation("/");
+      return;
+    }
+    setData(JSON.parse(storedData));
+  }, [setLocation]);
+
+  if (!data) {
     return (
       <div className="p-6 space-y-6">
         <Skeleton className="h-[200px] w-full" />
@@ -20,8 +30,6 @@ export default function Dashboard() {
       </div>
     );
   }
-
-  if (!data) return null;
 
   return (
     <div className="min-h-screen bg-background p-6">
