@@ -5,7 +5,14 @@ import fs from 'fs';
 
 const app = express();
 
-app.use(cors()); // This will allow all origins without restrictions
+// Configure CORS with specific options
+app.use(cors({
+  origin: '*', // Allow requests from any origin
+  methods: ['GET', 'POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
+}));
+;
 
 app.get('/race-data/:username', (req, res) => {
   const { username } = req.params;
@@ -33,13 +40,20 @@ app.get('/race-data/:username', (req, res) => {
     ]
   };
 
+  res.setHeader('Access-Control-Allow-Origin', '*');  // For development
   res.setHeader('Content-Type', 'application/json');
   res.json(mockData);
 });
 
 const PORT = 8000;
 
-// For production, you'll need proper SSL certificates
+// For development, you might want to use HTTP instead of HTTPS initially
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Race data server running on http://localhost:${PORT}`);
+});
+
+// Comment out the HTTPS server for now
+/*
 const options = {
   key: fs.readFileSync('path/to/your/key.pem'),
   cert: fs.readFileSync('path/to/your/cert.pem')
@@ -48,3 +62,4 @@ const options = {
 https.createServer(options, app).listen(PORT, 'localhost', () => {
   console.log(`Race data server running on https://localhost:${PORT}`);
 }); 
+*/ 
