@@ -26,7 +26,7 @@ export default function Upload() {
 
     setIsLoading(true);
     try {
-      const raceDataUrl = `http://54.252.151.53:8000/race-data/${encodeURIComponent(username)}`;
+      const raceDataUrl = `http://localhost:8000/race-data/${encodeURIComponent(username)}`;
       console.log('Attempting to fetch from:', raceDataUrl);
       
       const response = await fetch(raceDataUrl);
