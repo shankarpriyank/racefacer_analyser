@@ -26,22 +26,28 @@ export default function Upload() {
 
     setIsLoading(true);
     try {
-      const raceDataUrl = `http://localhost:8000/race-data/${encodeURIComponent(username)}`;
+      const raceDataUrl = `http://54.252.151.53:8000/race-data/${encodeURIComponent(username)}`;
+      console.log('Attempting to fetch from:', raceDataUrl);
+      
       const response = await fetch(raceDataUrl);
+      console.log('Response status:', response.status);
       
       if (!response.ok) {
-        throw new Error(`Failed to fetch race data: ${response.statusText}`);
+        const errorText = await response.text();
+        console.error('Error response:', errorText);
+        throw new Error(`Server error: ${response.status} ${response.statusText}`);
       }
 
       const raceData = await response.json();
-      // Store the race data in sessionStorage for the dashboard
+      console.log('Received race data:', raceData);
+      
       sessionStorage.setItem('raceData', JSON.stringify(raceData));
       setLocation("/dashboard");
     } catch (error) {
-      console.error('Error:', error);
+      console.error('Detailed error:', error);
       toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to fetch race data",
+        title: "Connection Error",
+        description: "Could not connect to the race data server. Please check your internet connection or try again later.",
         variant: "destructive"
       });
     } finally {

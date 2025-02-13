@@ -6,6 +6,8 @@ import RaceComparison from "@/components/race-comparison";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft } from "lucide-react";
 import type { RaceDataJson } from "@shared/schema";
 
 export default function Dashboard() {
@@ -34,6 +36,15 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-background p-6">
       <div className="max-w-7xl mx-auto space-y-6">
+        <Button 
+          variant="ghost" 
+          className="mb-4" 
+          onClick={() => setLocation("/")}
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back to Search
+        </Button>
+        
         <ProfileCard profile={data.profile_info} />
 
         <Tabs defaultValue="races" className="w-full">

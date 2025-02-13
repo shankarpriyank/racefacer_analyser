@@ -3,15 +3,11 @@ import cors from 'cors';
 
 const app = express();
 
-// Enable CORS for all origins during development
-app.use(cors({
-  origin: '*',
-  methods: ['GET', 'POST', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Accept', 'Origin']
-}));
+app.use(cors()); // This will allow all origins without restrictions
 
 app.get('/race-data/:username', (req, res) => {
   const { username } = req.params;
+  console.log(`Received request for username: ${username}`);
   
   // Mock data for testing - replace this with your actual data fetching logic
   const mockData = {
@@ -35,10 +31,11 @@ app.get('/race-data/:username', (req, res) => {
     ]
   };
 
+  res.setHeader('Content-Type', 'application/json');
   res.json(mockData);
 });
 
 const PORT = 8000;
-app.listen(PORT, () => {
-  console.log(`Race data server running on port ${PORT}`);
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Race data server running on http://54.252.151.53:${PORT}`);
 }); 

@@ -19,7 +19,7 @@ export default function ProfileCard({ profile }: ProfileCardProps) {
       icon: Clock,
     },
     {
-      label: "Total Races",
+      label: profile["Total Races"] === 5 ? "Total Processed Races" : "Total Races",
       value: profile["Total Races"].toString(),
       icon: Trophy,
     },
