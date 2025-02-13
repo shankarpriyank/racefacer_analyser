@@ -1,5 +1,7 @@
 import express from 'express';
 import cors from 'cors';
+import https from 'https';
+import fs from 'fs';
 
 const app = express();
 
@@ -36,6 +38,13 @@ app.get('/race-data/:username', (req, res) => {
 });
 
 const PORT = 8000;
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Race data server running on http://54.252.151.53:${PORT}`);
+
+// For production, you'll need proper SSL certificates
+const options = {
+  key: fs.readFileSync('path/to/your/key.pem'),
+  cert: fs.readFileSync('path/to/your/cert.pem')
+};
+
+https.createServer(options, app).listen(PORT, '0.0.0.0', () => {
+  console.log(`Race data server running on https://54.252.151.53:${PORT}`);
 }); 

@@ -1,4 +1,13 @@
+import { useState } from "react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
+import { Card } from "@/components/ui/card";
+import { Search, Loader2, X } from "lucide-react";
 import {
+  ResponsiveContainer,
   LineChart,
   Line,
   XAxis,
@@ -6,116 +15,328 @@ import {
   CartesianGrid,
   Tooltip,
   Legend,
-  ResponsiveContainer,
   ReferenceLine
 } from "recharts";
-import { Card } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
-import { parseTimeToSeconds, formatSecondsToTime } from "@/lib/utils";
-import { useState } from "react";
 import type { RaceDataJson } from "@shared/schema";
+
+interface ComparisonUser {
+  username: string;
+  races: RaceDataJson["races_data"];
+  selectedRaces: string[];
+}
 
 interface RaceComparisonProps {
   races: RaceDataJson["races_data"];
 }
 
-export default function RaceComparison({ races }: RaceComparisonProps) {
-  const [selectedRaces, setSelectedRaces] = useState<string[]>([]);
+const parseTimeToSeconds = (time: string | number): number => {
+  if (typeof time === 'number') return time;
+  
+  // Handle MM:SS.mmm format
+  const [minutes, seconds] = time.split(':').map(parseFloat);
+  return minutes * 60 + (seconds || 0);
+};
 
-  const handleRaceToggle = (raceId: string) => {
-    setSelectedRaces(prev =>
+const formatSecondsToTime = (seconds: number): string => {
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = (seconds % 60).toFixed(3);
+  return minutes > 0 
+    ? `${minutes}:${remainingSeconds.padStart(6, '0')}`
+    : remainingSeconds;
+};
+
+export default function RaceComparison({ races }: RaceComparisonProps) {
+  const [mySelectedRaces, setMySelectedRaces] = useState<string[]>([]);
+  const [compareUsername, setCompareUsername] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [comparisonUsers, setComparisonUsers] = useState<ComparisonUser[]>([]);
+  const { toast } = useToast();
+
+  const handleMyRaceToggle = (raceId: string) => {
+    setMySelectedRaces(prev =>
       prev.includes(raceId)
         ? prev.filter(id => id !== raceId)
         : [...prev, raceId]
     );
   };
 
-  const filteredRaces = races.filter(race => selectedRaces.includes(race.race_id));
-  const maxLaps = Math.max(...filteredRaces.map(race => race.lap_times.length), 1);
-
-  // Calculate Y-axis domain based on all lap times
-  const allTimes = filteredRaces.flatMap(race =>
-    race.lap_times.map(([_, time]) => parseTimeToSeconds(time))
-  );
-  const minTime = Math.floor(Math.min(...allTimes, Number.MAX_VALUE));
-  const maxTime = Math.ceil(Math.max(...allTimes, 0));
-
-  // Generate ticks for every second
-  const yTicks = Array.from(
-    { length: maxTime - minTime + 1 },
-    (_, i) => minTime + i
-  );
-
-  // Calculate best and average times across all selected races
-  const bestTime = Math.min(...allTimes);
-  const avgTime = allTimes.reduce((sum, time) => sum + time, 0) / allTimes.length;
-  const worstTime = Math.max(...allTimes);
-
-  const formatDate = (dateStr: string, timeStr: string) => {
-    const [day, month, year] = dateStr.split('.');
-    return `${day}/${month}/${year} - ${timeStr}`;
+  const handleComparisonRaceToggle = (username: string, raceId: string) => {
+    setComparisonUsers(prev => prev.map(user => 
+      user.username === username
+        ? {
+            ...user,
+            selectedRaces: user.selectedRaces.includes(raceId)
+              ? user.selectedRaces.filter(id => id !== raceId)
+              : [...user.selectedRaces, raceId]
+          }
+        : user
+    ));
   };
 
-  // Prepare data for chart
-  const data = Array.from({ length: maxLaps }, (_, i) => {
-    const lapData: Record<string, any> = {
-      lap: i + 1
+  const handleCompareUser = async () => {
+    if (!compareUsername.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter a username to compare with",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Check if user is already added
+    if (comparisonUsers.some(u => u.username === compareUsername)) {
+      toast({
+        title: "Error",
+        description: "This user is already added for comparison",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const response = await fetch(`http://localhost:8000/race-data/${encodeURIComponent(compareUsername)}`);
+      if (!response.ok) throw new Error('Failed to fetch comparison data');
+      
+      const data: RaceDataJson = await response.json();
+      setComparisonUsers(prev => [...prev, {
+        username: compareUsername,
+        races: data.races_data,
+        selectedRaces: []
+      }]);
+      
+      setCompareUsername("");
+      toast({
+        title: "Success",
+        description: `Added ${compareUsername}'s races for comparison`,
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to load comparison data",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const removeComparisonUser = (username: string) => {
+    setComparisonUsers(prev => prev.filter(u => u.username !== username));
+  };
+
+  // Update the formatRaceData function
+  const formatRaceData = (race: RaceDataJson["races_data"][0], source: string, username: string) => {
+    // Ensure lap numbers are properly parsed and sorted
+    const formattedData = race.lap_times
+      .map(([lap, time]) => ({
+        lap: typeof lap === 'string' ? parseInt(lap.split(' ')[1]) : lap,
+        time: parseTimeToSeconds(time),
+      }))
+      .sort((a, b) => a.lap - b.lap);
+
+    const bestLap = Math.min(...formattedData.map(d => d.time));
+    const worstLap = Math.max(...formattedData.map(d => d.time));
+    const avgLap = formattedData.reduce((sum, d) => sum + d.time, 0) / formattedData.length;
+
+    return {
+      raceId: `${username}_${race.race_id}`,
+      data: formattedData,
+      source: `${source} - ${race.track}`,
+      track: race.track,
+      date: race.date,
+      time: race.time,
+      stats: { bestLap, worstLap, avgLap }
     };
+  };
 
-    filteredRaces.forEach(race => {
-      const lapTime = race.lap_times[i];
-      if (lapTime) {
-        lapData[race.race_id] = parseTimeToSeconds(lapTime[1]);
-      }
+  // Update the data preparation section
+  const allSelectedRaces = [
+    ...races
+      .filter(race => mySelectedRaces.includes(race.race_id))
+      .map(race => formatRaceData(race, 'Your races', 'you')),
+    ...comparisonUsers.flatMap(user => 
+      user.races
+        .filter(race => user.selectedRaces.includes(race.race_id))
+        .map(race => formatRaceData(race, `${user.username}'s races`, user.username))
+    )
+  ];
+
+  // Get all unique lap numbers across all races
+  const allLaps = Array.from(
+    new Set(
+      allSelectedRaces.flatMap(race => 
+        race.data.map(d => d.lap)
+      )
+    )
+  ).sort((a, b) => a - b);
+
+  // Create a normalized dataset where each race has data points for all laps
+  const combinedData = allLaps.map(lap => {
+    const dataPoint: any = { lap };
+    allSelectedRaces.forEach(race => {
+      const lapData = race.data.find(d => d.lap === lap);
+      dataPoint[race.raceId] = lapData ? lapData.time : null;
     });
-
-    return lapData;
+    return dataPoint;
   });
+
+  // Find the overall min and max times for consistent Y-axis scaling
+  const allTimes = allSelectedRaces.flatMap(race => 
+    race.data.map(d => d.time)
+  );
+  const overallMinTime = Math.min(...allTimes);
+  const overallMaxTime = Math.max(...allTimes);
+  const yAxisDomain = [
+    Math.floor(overallMinTime) - 1,
+    Math.ceil(overallMaxTime) + 1
+  ];
+
+  // Use existing allLaps for min and max
+  const minLap = Math.min(...allLaps);
+  const maxLap = Math.max(...allLaps);
+
+  const colors = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#6366f1', '#ec4899'];
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap gap-4">
-        {races.map((race) => (
-          <div
-            key={race.race_id}
-            className="flex items-start space-x-2 p-2 rounded-lg hover:bg-accent border border-border"
-          >
-            <Checkbox
-              id={race.race_id}
-              checked={selectedRaces.includes(race.race_id)}
-              onCheckedChange={() => handleRaceToggle(race.race_id)}
-            />
-            <Label htmlFor={race.race_id} className="text-sm cursor-pointer">
-              <div className="font-medium">{formatDate(race.date, race.time)}</div>
-              <div className="text-muted-foreground">Position: {race.position}</div>
-            </Label>
-          </div>
-        ))}
+      {/* Compare user input */}
+      <div className="flex gap-4 items-center">
+        <Input
+          placeholder="Enter username to compare with"
+          value={compareUsername}
+          onChange={(e) => setCompareUsername(e.target.value)}
+          className="max-w-xs"
+        />
+        <Button 
+          onClick={handleCompareUser}
+          disabled={isLoading}
+        >
+          {isLoading ? (
+            <Loader2 className="h-4 w-4 animate-spin mr-2" />
+          ) : (
+            <Search className="h-4 w-4 mr-2" />
+          )}
+          Add User
+        </Button>
       </div>
 
-      {selectedRaces.length > 0 ? (
+      {/* Your races selection */}
+      <div>
+        <h3 className="text-lg font-semibold mb-2">Your Races</h3>
+        <div className="flex flex-wrap gap-4">
+          {races.map((race) => (
+            <div
+              key={race.race_id}
+              className="flex items-start space-x-2 p-2 rounded-lg hover:bg-accent border border-border"
+            >
+              <Checkbox
+                id={`my-${race.race_id}`}
+                checked={mySelectedRaces.includes(race.race_id)}
+                onCheckedChange={() => handleMyRaceToggle(race.race_id)}
+              />
+              <Label htmlFor={`my-${race.race_id}`} className="text-sm cursor-pointer">
+                <div className="font-medium">{race.track}</div>
+                <div className="text-muted-foreground">Position: {race.position}</div>
+                <div className="text-xs text-muted-foreground mt-1">
+                  {race.date} - {race.time}
+                </div>
+              </Label>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Comparison users' races */}
+      {comparisonUsers.map((user) => (
+        <div key={user.username} className="border rounded-lg p-4">
+          <div className="flex justify-between items-center mb-3">
+            <h3 className="text-lg font-semibold">{user.username}'s Races</h3>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => removeComparisonUser(user.username)}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+          <div className="flex flex-wrap gap-4">
+            {user.races.map((race) => (
+              <div
+                key={race.race_id}
+                className="flex items-start space-x-2 p-2 rounded-lg hover:bg-accent border border-border"
+              >
+                <Checkbox
+                  id={`${user.username}-${race.race_id}`}
+                  checked={user.selectedRaces.includes(race.race_id)}
+                  onCheckedChange={() => handleComparisonRaceToggle(user.username, race.race_id)}
+                />
+                <Label htmlFor={`${user.username}-${race.race_id}`} className="text-sm cursor-pointer">
+                  <div className="font-medium">{race.track}</div>
+                  <div className="text-muted-foreground">Position: {race.position}</div>
+                  <div className="text-xs text-muted-foreground mt-1">
+                    {race.date} - {race.time}
+                  </div>
+                </Label>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+
+      {/* Update the Chart section */}
+      {allSelectedRaces.length > 0 && (
         <Card className="p-8">
-          <ResponsiveContainer width="100%" height={500}>
+          <div className="mb-6">
+            <h4 className="text-sm font-medium mb-3">Race Comparison</h4>
+            <div className="grid grid-cols-3 gap-4 text-sm">
+              {allSelectedRaces.map((race, index) => (
+                <div 
+                  key={race.raceId}
+                  className="p-3 rounded-lg bg-muted/50"
+                >
+                  <div className="text-sm font-medium mb-1" style={{ color: colors[index % colors.length] }}>
+                    {race.source}
+                  </div>
+                  <div className="grid grid-cols-3 gap-2 text-xs mb-2">
+                    <div>Best: {formatSecondsToTime(race.stats.bestLap)}</div>
+                    <div>Avg: {formatSecondsToTime(race.stats.avgLap)}</div>
+                    <div>Worst: {formatSecondsToTime(race.stats.worstLap)}</div>
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    {race.date} - {race.time}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <ResponsiveContainer width="100%" height={700}>
             <LineChart 
-              data={data} 
-              margin={{ top: 30, right: 100, bottom: 50, left: 70 }}
+              data={combinedData}
+              margin={{ 
+                top: 30, 
+                right: 100, 
+                bottom: 180,
+                left: 70 
+              }}
             >
               <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
               <XAxis
                 dataKey="lap"
+                type="number"
+                domain={[Math.min(...allLaps), Math.max(...allLaps)]}
+                allowDataOverflow={false}
                 label={{ 
                   value: "Lap Number", 
-                  position: "bottom", 
-                  offset: 70 
+                  position: "bottom",
+                  offset: 25
                 }}
                 tick={{ fontSize: 12 }}
-                tickMargin={10}
-                interval={0}  // Show all lap numbers
+                tickMargin={20}
               />
               <YAxis
-                domain={[minTime - 1, maxTime + 1]}
-                ticks={yTicks}
+                domain={yAxisDomain}
                 tickFormatter={(value) => formatSecondsToTime(value)}
                 label={{
                   value: "Lap Time",
@@ -125,9 +346,8 @@ export default function RaceComparison({ races }: RaceComparisonProps) {
                 }}
                 tick={{ fontSize: 12 }}
                 tickMargin={10}
-                allowDataOverflow={true}
               />
-              <Tooltip
+              <Tooltip 
                 formatter={(value: number) => [formatSecondsToTime(value), "Lap Time"]}
                 labelFormatter={(label) => `Lap ${label}`}
                 contentStyle={{
@@ -137,66 +357,26 @@ export default function RaceComparison({ races }: RaceComparisonProps) {
                   padding: "8px"
                 }}
               />
-              <Legend
-                formatter={(value) => {
-                  const race = races.find(r => r.race_id === value);
-                  return race ? formatDate(race.date, race.time) : value;
-                }}
+              <Legend 
+                layout="horizontal"
+                verticalAlign="bottom"
+                align="center"
                 wrapperStyle={{
-                  paddingTop: "20px",
-                  paddingBottom: "20px"
+                  paddingTop: "60px",
+                  width: "100%",
+                  marginLeft: "auto",
+                  marginRight: "auto"
                 }}
               />
-              {/* Best Time Reference Line */}
-              <ReferenceLine
-                y={bestTime}
-                stroke="rgb(34, 197, 94)"  // Green-500
-                strokeDasharray="3 3"
-                label={{ 
-                  value: "Best Time Overall", 
-                  position: "right",
-                  fill: "rgb(34, 197, 94)",
-                  fontSize: 12
-                }}
-              />
-              {/* Average Time Reference Line */}
-              <ReferenceLine
-                y={avgTime}
-                stroke="rgb(59, 130, 246)"  // Blue-500
-                strokeDasharray="3 3"
-                label={{ 
-                  value: "Average Time", 
-                  position: "right",
-                  fill: "rgb(59, 130, 246)",
-                  fontSize: 12
-                }}
-              />
-              {/* Worst Time Reference Line */}
-              <ReferenceLine
-                y={worstTime}
-                stroke="rgb(239, 68, 68)"  // Red-500
-                strokeDasharray="3 3"
-                label={{ 
-                  value: "Worst Time Overall", 
-                  position: "right",
-                  fill: "rgb(239, 68, 68)",
-                  fontSize: 12
-                }}
-              />
-              {filteredRaces.map((race, index) => (
+              {allSelectedRaces.map((race, index) => (
                 <Line
-                  key={race.race_id}
+                  key={race.raceId}
                   type="monotone"
-                  dataKey={race.race_id}
-                  name={race.race_id}
-                  stroke={`rgb(${[
-                    [59, 130, 246],   // Blue
-                    [34, 197, 94],    // Green
-                    [239, 68, 68],    // Red
-                    [168, 85, 247],   // Purple
-                    [234, 179, 8]     // Yellow
-                  ][index % 5].join(', ')})`}
+                  dataKey={race.raceId}
+                  name={race.source}
+                  stroke={colors[index % colors.length]}
                   strokeWidth={2}
+                  connectNulls={true}
                   dot={{
                     r: 4,
                     strokeWidth: 2,
@@ -204,18 +384,14 @@ export default function RaceComparison({ races }: RaceComparisonProps) {
                   }}
                   activeDot={{
                     r: 6,
+                    stroke: colors[index % colors.length],
                     strokeWidth: 2,
                     fill: "white"
                   }}
-                  connectNulls
                 />
               ))}
             </LineChart>
           </ResponsiveContainer>
-        </Card>
-      ) : (
-        <Card className="p-6 text-center text-muted-foreground">
-          Select races to compare their lap times
         </Card>
       )}
     </div>

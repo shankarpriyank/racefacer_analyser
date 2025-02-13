@@ -25,6 +25,24 @@ export default function ProfileCard({ profile }: ProfileCardProps) {
     },
   ];
 
+  const achievements = [
+    {
+      title: "Speed Demon",
+      condition: profile.Statistics["Top Speed"] > 200,
+      icon: "🏎️"
+    },
+    {
+      title: "Endurance Master",
+      condition: profile.Statistics["Total Drive Hours"] > 100,
+      icon: "⏱️"
+    },
+    {
+      title: "Podium Finisher",
+      condition: profile.best_position <= 3,
+      icon: "🏆"
+    }
+  ].filter(a => a.condition);
+
   return (
     <Card>
       <CardHeader>
@@ -50,6 +68,17 @@ export default function ProfileCard({ profile }: ProfileCardProps) {
               </div>
             </div>
           ))}
+        </div>
+        <div className="mt-6">
+          <h3 className="text-lg font-semibold mb-3">Achievements</h3>
+          <div className="flex gap-3">
+            {achievements.map(({ title, icon }) => (
+              <div key={title} className="flex items-center gap-2 p-2 bg-primary/10 rounded-lg">
+                <span className="text-2xl">{icon}</span>
+                <span className="text-sm font-medium">{title}</span>
+              </div>
+            ))}
+          </div>
         </div>
       </CardContent>
     </Card>
