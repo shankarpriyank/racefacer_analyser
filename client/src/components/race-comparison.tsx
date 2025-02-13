@@ -202,7 +202,13 @@ export default function RaceComparison({ races }: RaceComparisonProps) {
   return (
     <div className="space-y-6">
       {/* Compare user input */}
-      <div className="flex gap-4 items-center">
+      <form 
+        className="flex gap-4 items-center"
+        onSubmit={(e) => {
+          e.preventDefault();
+          handleCompareUser();
+        }}
+      >
         <Input
           placeholder="Enter username to compare with"
           value={compareUsername}
@@ -210,7 +216,7 @@ export default function RaceComparison({ races }: RaceComparisonProps) {
           className="max-w-xs"
         />
         <Button 
-          onClick={handleCompareUser}
+          type="submit"
           disabled={isLoading}
         >
           {isLoading ? (
@@ -220,7 +226,7 @@ export default function RaceComparison({ races }: RaceComparisonProps) {
           )}
           Add User
         </Button>
-      </div>
+      </form>
 
       {/* Your races selection */}
       <div>
