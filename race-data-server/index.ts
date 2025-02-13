@@ -45,6 +45,6 @@ const options = {
   cert: fs.readFileSync('path/to/your/cert.pem')
 };
 
-https.createServer(options, app).listen(PORT, '0.0.0.0', () => {
-  console.log(`Race data server running on https://54.252.151.53:${PORT}`);
+https.createServer(options, app).listen(PORT, 'localhost', () => {
+  console.log(`Race data server running on https://localhost:${PORT}`);
 }); 
