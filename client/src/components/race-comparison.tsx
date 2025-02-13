@@ -378,15 +378,21 @@ export default function RaceComparison({ races }: RaceComparisonProps) {
                   strokeWidth={2}
                   connectNulls={true}
                   dot={{
-                    r: 4,
-                    strokeWidth: 2,
-                    fill: "white"
+                    r: 2,
+                    strokeWidth: 1,
+                    fill: "white",
+                    strokeOpacity: 0.8
                   }}
                   activeDot={{
                     r: 6,
                     stroke: colors[index % colors.length],
                     strokeWidth: 2,
-                    fill: "white"
+                    fill: "white",
+                    strokeOpacity: 1
+                  }}
+                  opacity={0.7}
+                  onMouseEnter={(data, index) => {
+                    // Optional: You could add hover effects here
                   }}
                 />
               ))}
