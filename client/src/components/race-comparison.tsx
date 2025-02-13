@@ -95,7 +95,7 @@ export default function RaceComparison({ races }: RaceComparisonProps) {
 
     setIsLoading(true);
     try {
-      const response = await fetch(`http://localhost:8000/race-data/${encodeURIComponent(compareUsername)}`);
+      const response = await fetch(`http://54.252.151.53:8000/race-data/${encodeURIComponent(compareUsername)}`);
       if (!response.ok) throw new Error('Failed to fetch comparison data');
       
       const data: RaceDataJson = await response.json();
@@ -111,6 +111,7 @@ export default function RaceComparison({ races }: RaceComparisonProps) {
         description: `Added ${compareUsername}'s races for comparison`,
       });
     } catch (error) {
+      console.error('Comparison fetch error:', error);
       toast({
         title: "Error",
         description: "Failed to load comparison data",
